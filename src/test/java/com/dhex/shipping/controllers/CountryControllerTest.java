@@ -4,7 +4,7 @@ import com.dhex.shipping.builders.CountryBuilder;
 import com.dhex.shipping.dtos.ListOf;
 import com.dhex.shipping.exceptions.DuplicatedEntityException;
 import com.dhex.shipping.model.Country;
-import com.dhex.shipping.services.CountryService;
+import com.dhex.shipping.service.CountryService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

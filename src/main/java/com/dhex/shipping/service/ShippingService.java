@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.dhex.shipping.model.ShippingRequest.createShippingRequest;
 
@@ -106,14 +107,13 @@ public class ShippingService {
         // Status can be changed from "In transit" or "Internal" to any other status (including "In transit").
         // Status can be changed only from "On hold" to "In transit".
         // Any other status cannot be changed.
-        if(lastStatus == null || lastStatus.getStatus().equalsIgnoreCase("internal")) {
-            // This is the case of ShippingRequest that was just created.
-        }
-        else if(!lastStatus.getStatus().equalsIgnoreCase("in transit")) {
-            if(lastStatus.getStatus().equalsIgnoreCase("on hold") && !stat.equalsIgnoreCase("in transit"))
-                throw new NotValidShippingStatusException(lastStatus.getStatus(), stat);
-            else if(!lastStatus.getStatus().equalsIgnoreCase("on hold"))
-                throw new NotValidShippingStatusException(lastStatus.getStatus(), stat);
+        if (lastStatus != null && !lastStatus.getStatus().equalsIgnoreCase("internal")) {
+            if(!lastStatus.getStatus().equalsIgnoreCase("in transit")) {
+                if(lastStatus.getStatus().equalsIgnoreCase("on hold") && !stat.equalsIgnoreCase("in transit"))
+                    throw new NotValidShippingStatusException(lastStatus.getStatus(), stat);
+                else if(!lastStatus.getStatus().equalsIgnoreCase("on hold"))
+                    throw new NotValidShippingStatusException(lastStatus.getStatus(), stat);
+            }
         }
         // According to the rules of the business, this ID should be conformed of:
         // - Prefix "S".
@@ -137,17 +137,11 @@ public class ShippingService {
 
         LinkedList<ShippingRequestTrack> tracks = new LinkedList<>();
         // We have to return each status transformed into track
-        for (ShippingStatus stat : shipReq.getStatusList()) {
-            if(stat.getStatus().equalsIgnoreCase("internal")) {
-                continue;
-            } else {
-                tracks.add(new ShippingRequestTrack(
-                        stat.getLocation(),
-                        stat.getMoment().format(DateTimeFormatter.ofPattern("MMM dd'th' 'of' yyyy")),
-                        stat.getStatus(),
-                        stat.getObservations()));
-            }
-        }
+        tracks.addAll(shipReq.getStatusList().stream().filter(stat -> !stat.getStatus().equalsIgnoreCase("internal")).map(stat -> new ShippingRequestTrack(
+                stat.getLocation(),
+                stat.getMoment().format(DateTimeFormatter.ofPattern("MMM dd'th' 'of' yyyy")),
+                stat.getStatus(),
+                stat.getObservations())).collect(Collectors.toList()));
         return tracks;
     }
 }

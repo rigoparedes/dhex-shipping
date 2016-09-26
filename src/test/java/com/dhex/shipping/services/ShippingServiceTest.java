@@ -1,6 +1,8 @@
 package com.dhex.shipping.services;
 
 import com.dhex.shipping.model.ShippingRequest;
+import com.dhex.shipping.service.SendingRequestParameterList;
+import com.dhex.shipping.service.ShippingService;
 import org.junit.Test;
 
 import static org.hamcrest.core.Is.is;

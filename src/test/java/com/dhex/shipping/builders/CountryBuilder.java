@@ -7,7 +7,6 @@ import java.util.function.Consumer;
 public final class CountryBuilder {
     public long id = 1L;
     public String name = "Peru";
-    public boolean enabled = true;
 
     private CountryBuilder() {
         // to avoid unexpected instantiations
@@ -23,6 +22,6 @@ public final class CountryBuilder {
     }
 
     public Country now() {
-        return new Country(id, name, enabled);
+        return new Country(id, name, true);
     }
 }

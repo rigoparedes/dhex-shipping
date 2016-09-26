@@ -4,6 +4,7 @@ import com.dhex.shipping.builders.CountryBuilder;
 import com.dhex.shipping.dao.CountryDao;
 import com.dhex.shipping.exceptions.InvalidArgumentDhexException;
 import com.dhex.shipping.model.Country;
+import com.dhex.shipping.service.CountryService;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
