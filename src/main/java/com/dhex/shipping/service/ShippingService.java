@@ -54,7 +54,7 @@ public class ShippingService {
     }
 
     private void addObservations(String observations, ShippingRequest shippingRequest) {
-        if(observations != null && !observations.isEmpty()) {
+        if (observations != null && !observations.isEmpty()) {
             shippingRequest.setObservations(observations);
         }
     }
@@ -96,25 +96,21 @@ public class ShippingService {
     }
 
     public ShippingStatus registerStatus(String reqId, String loc, String stat, String obs) {
-        // Search the shipping request that matches with request ID.
-        // Otherwise throws an exception.
-        ShippingRequest shipReq = storedShippingRequests.stream()
-                .limit(1)
-                .filter(sr -> sr.getId().equals(reqId))
-                .findFirst()
-                .orElseThrow(() -> new ShippingNotFoundException(reqId));
+        ShippingRequest shipReq = findShippingRequestById(reqId);
         ShippingStatus lastStatus = shipReq.getLastStatus();
+
         // Status can be changed from "In transit" or "Internal" to any other status (including "In transit").
         // Status can be changed only from "On hold" to "In transit".
         // Any other status cannot be changed.
         if (lastStatus != null && !lastStatus.getStatus().equalsIgnoreCase("internal")) {
-            if(!lastStatus.getStatus().equalsIgnoreCase("in transit")) {
-                if(lastStatus.getStatus().equalsIgnoreCase("on hold") && !stat.equalsIgnoreCase("in transit"))
+            if (!lastStatus.getStatus().equalsIgnoreCase("in transit")) {
+                if (lastStatus.getStatus().equalsIgnoreCase("on hold") && !stat.equalsIgnoreCase("in transit"))
                     throw new NotValidShippingStatusException(lastStatus.getStatus(), stat);
-                else if(!lastStatus.getStatus().equalsIgnoreCase("on hold"))
+                else if (!lastStatus.getStatus().equalsIgnoreCase("on hold"))
                     throw new NotValidShippingStatusException(lastStatus.getStatus(), stat);
             }
         }
+
         // According to the rules of the business, this ID should be conformed of:
         // - Prefix "S".
         // - Followed by the shipping request ID.
@@ -126,22 +122,39 @@ public class ShippingService {
         return shipStat;
     }
 
-    public List<ShippingRequestTrack> trackStatusOf(String reqId) {
+    private ShippingRequest findShippingRequestById(String reqId) {
         // Search the shipping request that matches with request ID.
         // Otherwise throws an exception.
-        ShippingRequest shipReq = storedShippingRequests.stream()
+        return storedShippingRequests.stream()
                 .limit(1)
                 .filter(sr -> sr.getId().equals(reqId))
                 .findFirst()
                 .orElseThrow(() -> new ShippingNotFoundException(reqId));
+    }
+
+    public List<ShippingRequestTrack> trackStatusOf(String reqId) {
+        ShippingRequest shipReq = findShippingRequestById(reqId);
+
+        List<ShippingRequestTrack> requestTrackList = shipReq.getStatusList()
+                .stream()
+                .filter(stat -> !"internal".equalsIgnoreCase(stat.getStatus()))
+                .map(this::instanceShippingRequest)
+                .collect(Collectors.toList());
 
         LinkedList<ShippingRequestTrack> tracks = new LinkedList<>();
         // We have to return each status transformed into track
-        tracks.addAll(shipReq.getStatusList().stream().filter(stat -> !stat.getStatus().equalsIgnoreCase("internal")).map(stat -> new ShippingRequestTrack(
-                stat.getLocation(),
-                stat.getMoment().format(DateTimeFormatter.ofPattern("MMM dd'th' 'of' yyyy")),
-                stat.getStatus(),
-                stat.getObservations())).collect(Collectors.toList()));
+        tracks.addAll(requestTrackList);
         return tracks;
+    }
+
+    private ShippingRequestTrack instanceShippingRequest(ShippingStatus stat) {
+        return new ShippingRequestTrack(
+                stat.getLocation(),
+                stat.getMoment().format(
+                        DateTimeFormatter.ofPattern("MMM dd'th' 'of' yyyy")
+                ),
+                stat.getStatus(),
+                stat.getObservations()
+        );
     }
 }
